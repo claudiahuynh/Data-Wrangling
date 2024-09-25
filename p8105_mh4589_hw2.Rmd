@@ -10,3 +10,20 @@ library(tidyverse)
 library(readxl)
 ```
 
+Import the `subway` dataset
+
+```{r}
+subway_df = 
+  read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "", ".")) |>
+  janitor::clean_names() |> 
+ mutate(
+   entry = ifelse(is.na(entry), FALSE, TRUE)
+   )
+ select(subway_df, line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada)
+
+
+```
+
+This dataset contains information on the NYC subway system. It includes division, line, station names within each line, and the routes each line serves. It also includes information on vending, staffing and accessibility (whether the station is ADA compliant, and entrance types). It also includes geographical information such as north-south streets, east-west streets, corner(NW, SW, etc), station location, longitude and latitude as well as entry location, longitude and latitude. 
+
+I retained these following variables: line, station name, station latitude, station longitude, routes served, entry, vending, entrance type and ADA compliance.  The resulting data set contains `r ncol(subway_df)` columns and `r nrow(subway_df)` rows.
