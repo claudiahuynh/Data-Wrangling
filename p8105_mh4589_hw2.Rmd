@@ -1,0 +1,12 @@
+---
+title: "p8105_mh4589_hw2"
+author: "My An Huynh"
+date: "2024-09-25"
+output: github_document
+---
+
+```{r echo = FALSE, message = FALSE}
+library(tidyverse)
+library(readxl)
+```
+
