@@ -17,9 +17,8 @@ subway_df =
   read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "", ".")) |>
   janitor::clean_names() |> 
   mutate( 
-   entry = ifelse(is.na(entry), FALSE, TRUE))
-  
-  select(subway_df, line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) 
+   entry = ifelse(is.na(entry), FALSE, TRUE)) |> 
+  select(line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) 
 
   
 
@@ -32,10 +31,10 @@ I retained these following variables: line, station name, station latitude, stat
 The data is still not very tidy. 
 
 
-```{r}
 
-  distinct(subway_df, line, station_name)
-```
+There are `r nrow(subway_df |> distinct(line, station_name))` distinct stations by line and by name. There are a total of `r subway_df |>  summarise(count = sum(ada)) |>  pull(count)` stations that are ADA compliant. There are `r subway_df |> filter(entry =="TRUE", vending == "NO") |> summarise(count = n())` stations out of `r nrow(subway_df)` stations that allow entry without vending.
+
+
 
 #Problem 2
 
@@ -53,10 +52,8 @@ mr_trash_df =
     sports_balls = as.integer(sports_balls),
     year = as.numeric(year),
     trash_wheel = "mr_trash"
-  )
-
-  
-select(mr_trash_df, dumpster:homes_powered, -x15, -x16)
+  ) |> 
+  select(dumpster:homes_powered, -x15, -x16)
 
 ```
 
