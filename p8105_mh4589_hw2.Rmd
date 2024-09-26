@@ -16,14 +16,88 @@ Import the `subway` dataset
 subway_df = 
   read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "", ".")) |>
   janitor::clean_names() |> 
- mutate(
-   entry = ifelse(is.na(entry), FALSE, TRUE)
-   )
- select(subway_df, line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada)
+  mutate( 
+   entry = ifelse(is.na(entry), FALSE, TRUE))
+  
+  select(subway_df, line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) 
 
+  
 
 ```
 
 This dataset contains information on the NYC subway system. It includes division, line, station names within each line, and the routes each line serves. It also includes information on vending, staffing and accessibility (whether the station is ADA compliant, and entrance types). It also includes geographical information such as north-south streets, east-west streets, corner(NW, SW, etc), station location, longitude and latitude as well as entry location, longitude and latitude. 
 
-I retained these following variables: line, station name, station latitude, station longitude, routes served, entry, vending, entrance type and ADA compliance.  The resulting data set contains `r ncol(subway_df)` columns and `r nrow(subway_df)` rows.
+I retained these following variables: line, station name, station latitude, station longitude, routes served, entry, vending, entrance type and ADA compliance.  The resulting data set contains `r ncol(subway_df)` columns and `r nrow(subway_df)` rows. 
+
+The data is still not very tidy. 
+
+
+```{r}
+
+  distinct(subway_df, line, station_name)
+```
+
+#Problem 2
+
+```{r mr_trash}
+mr_trash_df = 
+  read_excel(
+     "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Mr. Trash Wheel",
+    na = c("NA", "", "."),
+    skip = 1,
+    n_max = 584,
+  ) |> 
+  janitor::clean_names() |> 
+  mutate(
+    sports_balls = as.integer(sports_balls),
+    year = as.numeric(year),
+    trash_wheel = "mr_trash"
+  )
+
+  
+select(mr_trash_df, dumpster:homes_powered, -x15, -x16)
+
+```
+
+
+```{r prof_trash}
+prof_trash_df = 
+  read_excel(
+     "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Professor Trash Wheel",
+    na = c("NA", "", "."),
+    skip = 1,
+    n_max = 106,
+  ) |> 
+  janitor::clean_names()  |> 
+  mutate(
+    trash_wheel = "prof_trash"
+  )
+
+```
+
+```{r gwynnda}
+gwynnda_df = 
+  read_excel(
+     "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Gwynnda Trash Wheel",
+    na = c("NA", "", "."),
+    skip = 1,
+    n_max = 155,
+  ) |> 
+  janitor::clean_names() |> 
+  mutate(
+    trash_wheel = "gwynnda"
+  )
+
+```
+
+```{r trash_wheel}
+trash_wheel_df = 
+  bind_rows(mr_trash_df, prof_trash_df, gwynnda_df) |> 
+  janitor::clean_names()
+relocate(trash_wheel_df, dumpster, trash_wheel)
+select(trash_wheel_df, dumpster:homes_powered)
+```
+
