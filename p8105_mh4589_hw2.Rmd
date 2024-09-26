@@ -30,8 +30,6 @@ I retained these following variables: line, station name, station latitude, stat
 
 The data is still not very tidy. 
 
-
-
 There are `r nrow(subway_df |> distinct(line, station_name))` distinct stations by line and by name. There are a total of `r subway_df |>  summarise(count = sum(ada)) |>  pull(count)` stations that are ADA compliant. There are `r subway_df |> filter(entry =="TRUE", vending == "NO") |> summarise(count = n())` stations out of `r nrow(subway_df)` stations that allow entry without vending.
 
 
@@ -53,7 +51,8 @@ mr_trash_df =
     year = as.numeric(year),
     trash_wheel = "mr_trash"
   ) |> 
-  select(dumpster:homes_powered, -x15, -x16)
+  relocate(dumpster, trash_wheel) |> 
+  select(dumpster:homes_powered, - x15, - x16)
 
 ```
 
@@ -70,7 +69,8 @@ prof_trash_df =
   janitor::clean_names()  |> 
   mutate(
     trash_wheel = "prof_trash"
-  )
+  ) 
+
 
 ```
 
@@ -93,8 +93,13 @@ gwynnda_df =
 ```{r trash_wheel}
 trash_wheel_df = 
   bind_rows(mr_trash_df, prof_trash_df, gwynnda_df) |> 
-  janitor::clean_names()
-relocate(trash_wheel_df, dumpster, trash_wheel)
-select(trash_wheel_df, dumpster:homes_powered)
+  janitor::clean_names() |> 
+  relocate(dumpster, trash_wheel) |> 
+  select(dumpster:homes_powered)
 ```
+Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in the resulting dataset, and give examples of key variables. For available data, what was the total weight of trash collected by Professor Trash Wheel? What was the total number of cigarette butts collected by Gwynnda in June of 2022?
 
+
+I combined the 3 datasets (Mr Trash Wheel, Professor Trash Wheel and Gwynnda) into one dataset named trash_wheel_df. There are a total of `r nrow(trash_wheel_df` rows and `r ncol(trash_wheel_df` columns. The combined dataset `trash_wheel_df` provides information on the weight in tons and volume in cubic yards of trash each trash wheel removes from the Inner Harbor in Baltimore from May 2016 to June 2023. The dataset also provides information on the different types of trash (e.g plastic bottles, cigarette buds, sports balls, etc) and the quantity for each type of trash that each trash wheel removes from May 2016 to June 2023. The `homes_powered` variable shows the number of houses powered for every ton of trash removed. 
+
+Professor Trash Wheel collected a total of `r sum(prof_trash_df, weight_tons)`
