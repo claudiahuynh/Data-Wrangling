@@ -103,6 +103,8 @@ trash_wheel_df =
 
 I combined the 3 datasets (Mr Trash Wheel, Professor Trash Wheel and Gwynnda) into one dataset named trash_wheel_df. There are a total of `r nrow(trash_wheel_df)` rows and `r ncol(trash_wheel_df)` columns. The combined dataset `trash_wheel_df` provides information on the weight in tons and volume in cubic yards of trash each trash wheel removes from the Inner Harbor in Baltimore from May 2016 to June 2023. The dataset also provides information on the different types of trash (e.g plastic bottles, cigarette buds, sports balls, etc) and the quantity for each type of trash that each trash wheel removes from May 2016 to June 2023. The `homes_powered` variable shows the number of houses powered for every ton of trash removed. 
 
+The total weight of trash collected by Professor Trash Wheel is `r prof_trash_df |> summarise(sum(weight_tons, na.rm = TRUE))` tons. The total number of cigarette butts collected by Gwynnda in June of 2022 is `r gwynnda_df |> filter(month == "June", year =="2022") |> summarise(sum(cigarette_butts, na.rm = TRUE))` butts.
+
 
 ## Problem 3 
 
@@ -160,20 +162,50 @@ joined_gbb_df =
   left_join(results_and_bakes_df, bakers_df, by = c("baker", "series"))
 
 ```
- 
+
+I imported the three datasets: `bakers`, `bakes` and `results` and cleaned variable names. For the `bakers` dataset, I separated the baker's full names to two columns - first and last name. For the `bakes` dataset, I used str_replace_all to get rid of the quotation marks around "Jo". I replaced Joanne with Jo in the `results` dataset for consistency. I noticed these discrepancies by using `anti_join()`. The results from using `anti_join()` also show that the `bakes` dataset only show information from series 1 to 8. 
+
+I used `left_join` to merge all 3 datasets into a single dataset named `joined_gbb_df`. The dataset includes information on the bakers' background (age, hometown, etc), signature bakes, show stoppers, and their results (whether they move forward or get eliminated). Because the `bakes` dataset is incomplete, the joined dataset also only includes information up to series 8. 
+
 ```{r}
 winners_df =
   results_df |> 
   filter(series <= 10, series >=5) |> 
   filter(result %in% c("WINNER", "STAR BAKER"))  |> 
-  select(series, episode, baker)
+  select(series, episode, baker, result)
 
 winners_df |>
   pivot_wider(
     names_from = series,
     values_from = baker
   ) |> 
+  arrange(episode) |> 
   knitr::kable()
   
 ```
  
+ I created a reader-friendly table that extracts information from the `results` dataset and includes information on the star bakers and winners across seasons 5 to 10. I noticed some predictability in that the winners in series 5 to 9 won "star baker" at least once. The only exception is the winner in series 10, David, who had never won star baker. 
+ 
+Import the `views` dataset
+
+```{r}
+viewership_df = 
+  read_csv("data/viewers.csv") |> 
+  janitor::clean_names() |> 
+  na.omit(views_df) |> 
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series",
+    values_to = "viewership",
+    names_prefix = "series_"
+  ) |> 
+  mutate(
+    series = as.numeric(series)
+  ) |> 
+  arrange(series) |> 
+  relocate(series)
+
+knitr::kable(head(viewership_df, 10), caption = "First 10 rows in the Viewership dataset")
+```
+
+The average viewership in series 1 is `r viewership_df |> filter(series == "1") |> summarise(mean(viewership, na.rm = TRUE))`. The average viewership in series 5 is `r viewership_df |> filter(series == "5") |> summarise(mean(viewership, na.rm = TRUE))`.
