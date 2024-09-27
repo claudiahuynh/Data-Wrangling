@@ -12,7 +12,7 @@ library(readxl)
 
 Import the `subway` dataset
 
-```{r}
+```{r subway}
 subway_df = 
   read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "", ".")) |>
   janitor::clean_names() |> 
@@ -35,27 +35,26 @@ There are `r nrow(subway_df |> distinct(line, station_name))` distinct stations 
 
 
 #Problem 2
-
+Import `mr_trash` dataset. 
 ```{r mr_trash}
 mr_trash_df = 
   read_excel(
      "data/202309 Trash Wheel Collection Data.xlsx", 
     sheet = "Mr. Trash Wheel",
-    na = c("NA", "", "."),
-    skip = 1,
-    n_max = 584,
-  ) |> 
+    range = "A2:N586",
+    na = c("NA", "", ".")) |> 
   janitor::clean_names() |> 
   mutate(
     sports_balls = as.integer(sports_balls),
     year = as.numeric(year),
     trash_wheel = "mr_trash"
   ) |> 
-  relocate(dumpster, trash_wheel) |> 
-  select(dumpster:homes_powered, - x15, - x16)
+  relocate(dumpster, trash_wheel)
 
 ```
 
+
+Import `prof_trash` dataset. 
 
 ```{r prof_trash}
 prof_trash_df = 
@@ -63,8 +62,7 @@ prof_trash_df =
      "data/202309 Trash Wheel Collection Data.xlsx", 
     sheet = "Professor Trash Wheel",
     na = c("NA", "", "."),
-    skip = 1,
-    n_max = 106,
+    range = "A2:M108"
   ) |> 
   janitor::clean_names()  |> 
   mutate(
@@ -74,14 +72,16 @@ prof_trash_df =
 
 ```
 
+
+Import `gwynnda` dataset. 
+
 ```{r gwynnda}
 gwynnda_df = 
   read_excel(
      "data/202309 Trash Wheel Collection Data.xlsx", 
     sheet = "Gwynnda Trash Wheel",
     na = c("NA", "", "."),
-    skip = 1,
-    n_max = 155,
+    range = "A2:L157"
   ) |> 
   janitor::clean_names() |> 
   mutate(
@@ -90,6 +90,8 @@ gwynnda_df =
 
 ```
 
+Combine 3 datasets. 
+
 ```{r trash_wheel}
 trash_wheel_df = 
   bind_rows(mr_trash_df, prof_trash_df, gwynnda_df) |> 
@@ -97,9 +99,81 @@ trash_wheel_df =
   relocate(dumpster, trash_wheel) |> 
   select(dumpster:homes_powered)
 ```
-Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in the resulting dataset, and give examples of key variables. For available data, what was the total weight of trash collected by Professor Trash Wheel? What was the total number of cigarette butts collected by Gwynnda in June of 2022?
 
 
-I combined the 3 datasets (Mr Trash Wheel, Professor Trash Wheel and Gwynnda) into one dataset named trash_wheel_df. There are a total of `r nrow(trash_wheel_df` rows and `r ncol(trash_wheel_df` columns. The combined dataset `trash_wheel_df` provides information on the weight in tons and volume in cubic yards of trash each trash wheel removes from the Inner Harbor in Baltimore from May 2016 to June 2023. The dataset also provides information on the different types of trash (e.g plastic bottles, cigarette buds, sports balls, etc) and the quantity for each type of trash that each trash wheel removes from May 2016 to June 2023. The `homes_powered` variable shows the number of houses powered for every ton of trash removed. 
+I combined the 3 datasets (Mr Trash Wheel, Professor Trash Wheel and Gwynnda) into one dataset named trash_wheel_df. There are a total of `r nrow(trash_wheel_df)` rows and `r ncol(trash_wheel_df)` columns. The combined dataset `trash_wheel_df` provides information on the weight in tons and volume in cubic yards of trash each trash wheel removes from the Inner Harbor in Baltimore from May 2016 to June 2023. The dataset also provides information on the different types of trash (e.g plastic bottles, cigarette buds, sports balls, etc) and the quantity for each type of trash that each trash wheel removes from May 2016 to June 2023. The `homes_powered` variable shows the number of houses powered for every ton of trash removed. 
 
-Professor Trash Wheel collected a total of `r sum(prof_trash_df, weight_tons)`
+
+## Problem 3 
+
+Import `bakers` dataset.
+```{r bakers}
+bakers_df = 
+  read_csv("data/bakers.csv", na = c("NA", "", ".")) |> 
+  janitor::clean_names() |> 
+  na.omit(bakers_df) |> 
+  separate(
+    baker_name, into = c("baker", "baker_last_name"), sep = " "
+  ) |> 
+  arrange(series)
+
+```
+
+Import `bakes` dataset.
+```{r bakes}
+bakes_df = 
+  read_csv("data/bakes.csv", na = c("NA", "", ".")) |> 
+  janitor::clean_names() |> 
+  mutate(
+    baker = str_replace_all(baker, '"Jo"', "Jo")
+  )
+  
+```
+
+Import `results` dataset.
+```{r results}
+results_df = 
+  read_csv("data/results.csv", na = c("NA", "", "."), skip = 2) |> 
+  janitor::clean_names() |> 
+  arrange(series, baker) |> 
+  na.omit(results_df) |> 
+  mutate(
+    baker = ifelse(row_number() == 57:64, "Jo", baker)
+  )
+
+```
+
+Use anti_join to view discrepancies.
+```{r missing_data}
+missing_bakes_df = anti_join(bakers_df, bakes_df)
+missing_results_df = anti_join(bakers_df, results_df)
+
+```
+
+Join the three datasets. 
+
+```{r final_gbb_df}
+results_and_bakes_df = 
+  left_join(bakes_df, results_df, by = c("baker", "series", "episode"))
+
+joined_gbb_df =
+  left_join(results_and_bakes_df, bakers_df, by = c("baker", "series"))
+
+```
+ 
+```{r}
+winners_df =
+  results_df |> 
+  filter(series <= 10, series >=5) |> 
+  filter(result %in% c("WINNER", "STAR BAKER"))  |> 
+  select(series, episode, baker)
+
+winners_df |>
+  pivot_wider(
+    names_from = series,
+    values_from = baker
+  ) |> 
+  knitr::kable()
+  
+```
+ 
