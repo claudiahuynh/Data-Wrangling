@@ -10,6 +10,8 @@ library(tidyverse)
 library(readxl)
 ```
 
+## Problem 1
+
 Import the `subway` dataset
 
 ```{r subway}
@@ -19,8 +21,6 @@ subway_df =
   mutate( 
    entry = ifelse(is.na(entry), FALSE, TRUE)) |> 
   select(line, station_name, station_latitude, station_longitude, route1:route11, entry, vending, entrance_type, ada) 
-
-  
 
 ```
 
@@ -32,9 +32,36 @@ The data is still not very tidy.
 
 There are `r nrow(subway_df |> distinct(line, station_name))` distinct stations by line and by name. There are a total of `r subway_df |>  summarise(count = sum(ada)) |>  pull(count)` stations that are ADA compliant. There are `r subway_df |> filter(entry =="TRUE", vending == "NO") |> summarise(count = n())` stations out of `r nrow(subway_df)` stations that allow entry without vending.
 
+```{r}
+subway_df_reformatted =
+  subway_df |> 
+  mutate(
+    route8 = as.character(route8),
+    route9 = as.character(route9),
+    route10 = as.character(route10),
+    route11 = as.character(route11)
+  ) |> 
+  pivot_longer(
+    cols = route1:route11,
+    names_to = "route_number",
+    values_to = "route_name",
+    names_prefix = "route"
+  ) |> 
+  relocate(route_number, route_name) |> 
+  arrange(route_number) 
+
+subway_a_df = 
+  subway_df_reformatted |> 
+  filter(route_name == "A") |> 
+  distinct(station_name,line, .keep_all = TRUE) 
 
 
-#Problem 2
+```
+
+There are `r subway_a_df |> summarise(count = n())` distinct stations that serve the A train. Out of these stations, there are `r subway_a_df |> filter(ada == "TRUE") |> summarise(count = n())` stations that are ADA compliant. 
+
+## Problem 2
+
 Import `mr_trash` dataset. 
 ```{r mr_trash}
 mr_trash_df = 
