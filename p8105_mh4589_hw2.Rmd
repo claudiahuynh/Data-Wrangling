@@ -66,7 +66,7 @@ Import `mr_trash` dataset.
 ```{r mr_trash}
 mr_trash_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data.xlsx", 
+     "data/202309 Trash Wheel Collection Data(1).xlsx", 
     sheet = "Mr. Trash Wheel",
     range = "A2:N586",
     na = c("NA", "", ".")) |> 
@@ -86,7 +86,7 @@ Import `prof_trash` dataset.
 ```{r prof_trash}
 prof_trash_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data.xlsx", 
+     "data/202309 Trash Wheel Collection Data(1).xlsx", 
     sheet = "Professor Trash Wheel",
     na = c("NA", "", "."),
     range = "A2:M108"
@@ -105,7 +105,7 @@ Import `gwynnda` dataset.
 ```{r gwynnda}
 gwynnda_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data.xlsx", 
+     "data/202309 Trash Wheel Collection Data(1).xlsx", 
     sheet = "Gwynnda Trash Wheel",
     na = c("NA", "", "."),
     range = "A2:L157"
