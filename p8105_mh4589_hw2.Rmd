@@ -1,7 +1,7 @@
 ---
 title: "p8105_mh4589_hw2"
 author: "My An Huynh"
-date: "2024-09-25"
+date: "2024-10-02"
 output: github_document
 ---
 
@@ -66,9 +66,9 @@ Import `mr_trash` dataset.
 ```{r mr_trash}
 mr_trash_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data(1).xlsx", 
+     "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Mr. Trash Wheel",
-    range = "A2:N586",
+    range = "A2:N653",
     na = c("NA", "", ".")) |> 
   janitor::clean_names() |> 
   mutate(
@@ -86,10 +86,10 @@ Import `prof_trash` dataset.
 ```{r prof_trash}
 prof_trash_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data(1).xlsx", 
+     "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Professor Trash Wheel",
     na = c("NA", "", "."),
-    range = "A2:M108"
+    range = "A2:M120"
   ) |> 
   janitor::clean_names()  |> 
   mutate(
@@ -105,10 +105,10 @@ Import `gwynnda` dataset.
 ```{r gwynnda}
 gwynnda_df = 
   read_excel(
-     "data/202309 Trash Wheel Collection Data(1).xlsx", 
+     "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Gwynnda Trash Wheel",
     na = c("NA", "", "."),
-    range = "A2:L157"
+    range = "A2:L265"
   ) |> 
   janitor::clean_names() |> 
   mutate(
@@ -138,9 +138,8 @@ The total weight of trash collected by Professor Trash Wheel is `r prof_trash_df
 Import `bakers` dataset.
 ```{r bakers}
 bakers_df = 
-  read_csv("data/bakers.csv", na = c("NA", "", ".")) |> 
+  read_csv("data/bakers.csv", na = c("NA", "", ".", "N/A")) |> 
   janitor::clean_names() |> 
-  na.omit(bakers_df) |> 
   separate(
     baker_name, into = c("baker", "baker_last_name"), sep = " "
   ) |> 
@@ -151,7 +150,7 @@ bakers_df =
 Import `bakes` dataset.
 ```{r bakes}
 bakes_df = 
-  read_csv("data/bakes.csv", na = c("NA", "", ".")) |> 
+  read_csv("data/bakes.csv", na = c("NA", "", ".", "N/A")) |> 
   janitor::clean_names() |> 
   mutate(
     baker = str_replace_all(baker, '"Jo"', "Jo")
@@ -162,12 +161,10 @@ bakes_df =
 Import `results` dataset.
 ```{r results}
 results_df = 
-  read_csv("data/results.csv", na = c("NA", "", "."), skip = 2) |> 
+  read_csv("data/results.csv", na = c("NA", "", ".", "N/A"), skip = 2) |> 
   janitor::clean_names() |> 
-  arrange(series, baker) |> 
-  na.omit(results_df) |> 
   mutate(
-    baker = ifelse(row_number() == 57:64, "Jo", baker)
+    baker = if_else(baker == "Joanne", "Jo", baker)
   )
 
 ```
@@ -175,7 +172,8 @@ results_df =
 Use anti_join to view discrepancies.
 ```{r missing_data}
 missing_bakes_df = anti_join(bakers_df, bakes_df)
-missing_results_df = anti_join(bakers_df, results_df)
+missing_results_df = anti_join(bakers_df, results_df, by = "baker")
+
 
 ```
 
@@ -186,11 +184,13 @@ results_and_bakes_df =
   left_join(bakes_df, results_df, by = c("baker", "series", "episode"))
 
 joined_gbb_df =
-  left_join(results_and_bakes_df, bakers_df, by = c("baker", "series"))
+  left_join(results_and_bakes_df, bakers_df, by = c("baker", "series")) |> 
+  relocate(series, episode, baker, baker_last_name, baker_age, baker_occupation, hometown)
+
 
 ```
 
-I imported the three datasets: `bakers`, `bakes` and `results` and cleaned variable names. For the `bakers` dataset, I separated the baker's full names to two columns - first and last name. For the `bakes` dataset, I used str_replace_all to get rid of the quotation marks around "Jo". I replaced Joanne with Jo in the `results` dataset for consistency. I noticed these discrepancies by using `anti_join()`. The results from using `anti_join()` also show that the `bakes` dataset only show information from series 1 to 8. 
+I imported the three datasets: `bakers`, `bakes` and `results`, assigned NA values and cleaned variable names. I noticed some discrepancies around the baker Jo by using `anti_join()`. For the `bakers` dataset, I separated the baker's full names to two columns - first and last name. For the `bakes` dataset, I used str_replace_all to get rid of the quotation marks around "Jo". I replaced Joanne with Jo in the `results` dataset. The results from using `anti_join()` also show that the `bakes` dataset only show information from series 1 to 8. 
 
 I used `left_join` to merge all 3 datasets into a single dataset named `joined_gbb_df`. The dataset includes information on the bakers' background (age, hometown, etc), signature bakes, show stoppers, and their results (whether they move forward or get eliminated). Because the `bakes` dataset is incomplete, the joined dataset also only includes information up to series 8. 
 
@@ -211,7 +211,7 @@ winners_df |>
   
 ```
  
- I created a reader-friendly table that extracts information from the `results` dataset and includes information on the star bakers and winners across seasons 5 to 10. I noticed some predictability in that the winners in series 5 to 9 won "star baker" at least once. The only exception is the winner in series 10, David, who had never won star baker. 
+I created a reader-friendly table that extracts information from the `results` dataset and includes information on the star bakers and winners across seasons 5 to 10. I noticed some predictability in that the winners in series 5 to 9 won "star baker" at least once. The only exception is the winner in series 10, David, who had never won star baker. 
  
 Import the `views` dataset
 
@@ -219,7 +219,6 @@ Import the `views` dataset
 viewership_df = 
   read_csv("data/viewers.csv") |> 
   janitor::clean_names() |> 
-  na.omit(views_df) |> 
   pivot_longer(
     cols = series_1:series_10,
     names_to = "series",
@@ -235,4 +234,6 @@ viewership_df =
 knitr::kable(head(viewership_df, 10), caption = "First 10 rows in the Viewership dataset")
 ```
 
-The average viewership in series 1 is `r viewership_df |> filter(series == "1") |> summarise(mean(viewership, na.rm = TRUE))`. The average viewership in series 5 is `r viewership_df |> filter(series == "5") |> summarise(mean(viewership, na.rm = TRUE))`.
+I imported, cleaned variable names,, and organized the data using `pivot_longer`. The data is organized by putting series into a column called `series` and the viewership in another column called `viewership`. I eliminated the prefix "series_" so I can assign numeric values to the column. I then arranged the series in ascending order. The first ten row of this dataset is shown above. 
+
+The average viewership in series 1 is `r viewership_df |> filter(series == "1") |> summarise(mean(viewership, na.rm = TRUE))`. The average viewership in series 5 is `r viewership_df |> filter(series == "5") |> summarise(average = round(mean(viewership, na.rm = TRUE),2))`.
