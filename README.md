@@ -1,2 +1,2 @@
-# p8105_mh4589_hw2
-P8105 HW2
+# Data Wrangling Project
+This project focuses on data import, cleaning, and basic wrangling techniques including left join, full join and anti join. 
